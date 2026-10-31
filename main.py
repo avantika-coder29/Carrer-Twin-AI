@@ -303,7 +303,7 @@ if not career_goal.strip():
     st.info("Please enter a career name to explore your career guidance.")
     st.stop()
 
-career_key = career_goal.strip().lower()
+career_key = " ".join(career_goal.strip().lower().split())
 
 if career_key in CAREERS:
     profile = CAREERS[career_key]
