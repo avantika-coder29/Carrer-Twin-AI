@@ -1,36 +1,43 @@
-# Career Twin AI
+🎯 CareerTwin AI
 
-### AI-Powered Career Guidance, Resume Analysis and Job Readiness Application
+AI-Powered Career Planning Platform
 
-Career Twin AI is a Streamlit-based web application designed to help students understand their career readiness and prepare for software and technology careers.
+Developed by: Avantika S
+Education: Final Year B.E. Computer Science Engineering
 
-## 🚀 Features
+📌 About the Project
 
-- 📄 Resume Analyzer
-- 💼 Smart Career Recommendation
-- 📊 Job Readiness Score
-- 🎯 Skill Gap Analysis
-- 🎤 Interview Preparation
-- 🗺️ AI Career Roadmap
-- 📈 Career Progress Tracker
-- 📝 Resume and Career Guidance
+CareerTwin AI is a career guidance platform designed to help users explore career opportunities, identify skill gaps, prepare for interviews and create personalized career roadmaps.
 
-## 🛠️ Technologies Used
+✨ Features
+
+1. Skills Discovery
+2. Career Recommendation
+3. Dream Job Preparation
+4. Career Report
+5. Resume Analyzer
+6. Interview Preparation
+7. Job Readiness Score
+8. Job Recommendation
+9. AI Career Roadmap
+10. Career Progress Tracker
+11. Personalized Skill Gap Analyzer
+12. AI Interview Evaluation
+13. Career Analytics Dashboard
+14. Download Career Report
+
+🛠️ Technologies Used
 
 - Python
 - Streamlit
 - PyPDF2
-- python-docx
+- Python-docx
 
-## 🌟 Project Goal
-
-The main goal of Career Twin AI is to provide students with personalized career guidance by analyzing their skills, resume, preparation progress and career goals.
-
-## 🔗 Live Demo
+🌐 Live Application
 
 https://carrer-twin-ai-shihq3facqntaksdbjax2r.streamlit.app/
 
-## 👩‍💻 Project
+👩‍💻 Developer
 
-**Career Twin AI**  
-Developed as a career guidance and job preparation project for students.
+Avantika S
+B.E. Computer Science Engineering
