@@ -1,1782 +1,249 @@
 import streamlit as st
-from PyPDF2 import PdfReader
-from docx import Document
 
-# --------------------------------------------------
-# PAGE SETTINGS
-# --------------------------------------------------
+try:
+    from PyPDF2 import PdfReader
+except ImportError:
+    PdfReader = None
 
-st.set_page_config(
-    page_title="Career Twin AI",
-    page_icon="🚀",
-    layout="wide"
-)
+try:
+    from docx import Document
+except ImportError:
+    Document = None
 
-# --------------------------------------------------
-# TITLE
-# --------------------------------------------------
+st.set_page_config(page_title="CareerTwin AI", page_icon="🎯", layout="wide")
 
-st.title("🚀 Career Twin AI")
-st.subheader("Build your career with AI")
+CAREER_OPTIONS = [
+    "Software Developer", "Data Analyst", "UI/UX Designer", "Web Developer",
+    "AI / ML Engineer", "Software Tester", "Doctor", "Teacher", "Nurse"
+]
 
-st.write(
-    "Discover your skills • Identify your career path • "
-    "Prepare for your dream job"
-)
+CAREER_SKILLS = {
+    "Software Developer": ["Python", "Java", "SQL", "Data Structures", "Problem Solving", "Git"],
+    "Data Analyst": ["Python", "SQL", "Excel", "Power BI", "Statistics", "Data Visualization"],
+    "UI/UX Designer": ["Figma", "Wireframing", "Prototyping", "User Research", "Typography"],
+    "Web Developer": ["HTML", "CSS", "JavaScript", "React", "Python", "Git"],
+    "AI / ML Engineer": ["Python", "Statistics", "Machine Learning", "Pandas", "NumPy", "Deep Learning"],
+    "Software Tester": ["Manual Testing", "Test Cases", "Bug Reporting", "SDLC", "STLC", "SQL", "Selenium"],
+    "Doctor": ["Biology", "Anatomy", "Physiology", "Clinical Skills", "Communication", "Patient Care"],
+    "Teacher": ["Subject Knowledge", "Lesson Planning", "Communication", "Classroom Management", "Assessment"],
+    "Nurse": ["Patient Care", "Anatomy", "First Aid", "Communication", "Clinical Skills", "Medical Terminology"],
+}
 
-# --------------------------------------------------
-# NAME
-# --------------------------------------------------
+ROADMAPS = {
+    "Software Developer": ["Learn Python or Java fundamentals", "Practise problem solving and data structures", "Learn SQL, Git and APIs", "Build 2–3 projects", "Prepare for technical interviews"],
+    "Data Analyst": ["Learn Excel and data cleaning", "Learn SQL", "Practise Python with Pandas", "Create Power BI dashboards", "Build a portfolio using datasets"],
+    "UI/UX Designer": ["Learn design principles", "Practise Figma", "Create wireframes and prototypes", "Study user research", "Build a case-study portfolio"],
+    "Web Developer": ["Learn HTML and CSS", "Learn JavaScript", "Build responsive pages", "Learn React and APIs", "Deploy projects"],
+    "AI / ML Engineer": ["Strengthen Python", "Learn statistics and linear algebra basics", "Practise Pandas and NumPy", "Study machine learning", "Build ML projects"],
+    "Software Tester": ["Understand SDLC and STLC", "Learn test scenarios and test cases", "Practise functional and regression testing", "Learn SQL and API testing basics", "Explore Selenium"],
+    "Doctor": ["Complete the required science education", "Prepare for and qualify the relevant medical entrance examination", "Complete an approved medical degree", "Complete required clinical training and registration", "Pursue a medical specialty"],
+    "Teacher": ["Choose your subject and education level", "Complete the required degree", "Complete required teacher training or eligibility exams", "Practise lesson planning", "Build teaching experience"],
+    "Nurse": ["Complete an approved nursing qualification", "Build anatomy and patient-care knowledge", "Complete supervised clinical practice", "Meet registration and licensing requirements", "Develop specialty-care skills"],
+}
+
+INTERVIEW_QA = {
+    "Software Developer": [("What is a variable?", "A variable is a named place used to store a value."), ("What is OOP?", "Object-Oriented Programming organizes code using classes and objects."), ("What is SQL?", "SQL is used to manage data in relational databases.")],
+    "Data Analyst": [("What does a data analyst do?", "A data analyst studies data to support decisions."), ("What is data cleaning?", "It is correcting missing, duplicate or incorrect data."), ("What is a dashboard?", "A dashboard presents information using visuals and metrics.")],
+    "UI/UX Designer": [("What is UI?", "UI means User Interface, the visual parts a person interacts with."), ("What is UX?", "UX means User Experience, how easy and useful a product is."), ("What is a wireframe?", "A wireframe is a basic layout of a screen.")],
+    "Web Developer": [("What is HTML?", "HTML gives structure to a web page."), ("What is CSS?", "CSS controls a web page's appearance."), ("What is JavaScript?", "JavaScript adds interactivity to web pages.")],
+    "AI / ML Engineer": [("What is AI?", "AI enables computer systems to perform tasks that normally need human intelligence."), ("What is machine learning?", "Machine learning helps systems learn patterns from data."), ("What is a dataset?", "A dataset is a collection of related data.")],
+    "Software Tester": [("What is software testing?", "Testing checks whether software works as expected and helps find defects."), ("What is a test case?", "A test case contains steps, input and expected results."), ("What is regression testing?", "It checks that changes have not broken existing features.")],
+    "Doctor": [("Why is communication important in healthcare?", "It helps doctors understand patients and explain care clearly."), ("What is preventive healthcare?", "It means preventing illness or detecting it early."), ("Why is patient confidentiality important?", "It protects private medical information.")],
+    "Teacher": [("What makes an effective teacher?", "Clear communication, subject knowledge, patience and student engagement."), ("What is a lesson plan?", "It outlines learning goals, activities and assessment."), ("How can you support different learners?", "Use varied explanations and activities, and check understanding.")],
+    "Nurse": [("What is patient-centred care?", "It respects each patient's needs, preferences and dignity."), ("Why is hand hygiene important?", "It helps prevent the spread of infection."), ("Why are observation skills important?", "They help identify changes in a patient's condition.")],
+}
+
+def extract_resume_text(uploaded_file):
+    if uploaded_file is None:
+        return ""
+    try:
+        if uploaded_file.name.lower().endswith(".pdf"):
+            if PdfReader is None:
+                return "PyPDF2 package is not installed."
+            reader = PdfReader(uploaded_file)
+            return "\\n".join(page.extract_text() or "" for page in reader.pages)
+        if uploaded_file.name.lower().endswith(".docx"):
+            if Document is None:
+                return "python-docx package is not installed."
+            doc = Document(uploaded_file)
+            return "\\n".join(p.text for p in doc.paragraphs)
+        return "Please upload a PDF or DOCX file."
+    except Exception as error:
+        return f"Could not read the file: {error}"
+
+st.title("🎯 CareerTwin AI")
+st.subheader("Your AI-powered career planning companion")
+st.write("Explore careers, discover skills, prepare for interviews and create your learning roadmap.")
 
 name = st.text_input("Enter your name")
 
-if name:
+if not name.strip():
+    st.info("Please enter your name to open your CareerTwin AI dashboard.")
+else:
+    st.success(f"Welcome, {name.strip()}!")
+    st.markdown("### 📊 Your Career Dashboard")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Career paths", len(CAREER_OPTIONS))
+    col2.metric("Career tools", "14")
+    col3.metric("Your status", "Getting started")
 
-    st.success(f"Welcome {name}! 👋")
+    career_goal = st.selectbox("Choose your Career Goal", CAREER_OPTIONS)
+    st.caption("Choose from technology, healthcare or education careers.")
 
-    # ==================================================
-    # DASHBOARD
-    # ==================================================
+    features = [
+        "1. Skills Discovery", "2. Career Recommendation", "3. Dream Job Preparation",
+        "4. Career Report", "5. Resume Analyzer", "6. Interview Preparation",
+        "7. Job Readiness Score", "8. Job Recommendation", "9. AI Career Roadmap",
+        "10. AI Career Progress Tracker", "11. Personalized Skill Gap Analyzer",
+        "12. AI Interview Evaluation", "13. Career Analytics Dashboard",
+        "14. Download Career Report"
+    ]
+    feature = st.selectbox("Select a Feature", features)
+    st.divider()
 
-    st.header("📊 Career Dashboard")
-
-    col1, col2, col3, col4 = st.columns(4)
-
-    with col1:
-        st.metric("Skill Score", "80%")
-
-    with col2:
-        st.metric("Resume", "Ready")
-
-    with col3:
-        st.metric("Interview", "Ready")
-
-    with col4:
-        st.metric("Job Readiness", "92%")
-
-    # --------------------------------------------------
-    # CAREER GOAL
-    # --------------------------------------------------
-
-    st.subheader("🎯 Career Goal")
-
-    career_goal = st.selectbox(
-        "Select your career goal",
-        [
-            "Software Developer",
-            "Data Analyst",
-            "UI/UX Designer",
-            "Web Developer",
-            "AI / ML Engineer"
-        ]
-    )
-
-    st.info(f"Your selected career goal: {career_goal}")
-
-    # --------------------------------------------------
-    # CAREER PREPARATION PROGRESS
-    # --------------------------------------------------
-
-    st.subheader("📈 Career Preparation Progress")
-
-    st.write("Technical Skills")
-    st.progress(70)
-
-    st.write("Resume Preparation")
-    st.progress(100)
-
-    st.write("Interview Preparation")
-    st.progress(100)
-
-    st.write("Project Experience")
-    st.progress(100)
-
-    # ==================================================
-    # FEATURE SELECTION
-    # ==================================================
-
-    feature = st.selectbox(
-        "Choose a feature",
-        [
-            "Skills Discovery",
-            "Career Recommendation",
-            "Dream Job Preparation",
-            "Career Report",
-            "Resume Analyzer",
-            "Interview Preparation",
-            "Job Readiness Score",
-            "Job Recommendation",
-            "AI Career Roadmap",
-            "AI Career Progress Tracker",
-            "Personalized Skill Gap Analyzer",
-            "AI Interview Evaluation",
-            "Career Analytics Dashboard",
-            "Download Career Report"
-        ]
-    )
-
-    # ==================================================
-    # 1. SKILLS DISCOVERY
-    # ==================================================
-
-    if feature == "Skills Discovery":
-
+    if feature == features[0]:
         st.header("🧠 Skills Discovery")
-
-        programming = st.checkbox(
-            "I enjoy programming",
-            key="programming"
-        )
-
-        problem_solving = st.checkbox(
-            "I enjoy solving problems",
-            key="problem_solving"
-        )
-
-        designing = st.checkbox(
-            "I enjoy designing",
-            key="designing"
-        )
-
-        if st.button("🔍 Discover My Skills"):
-
-            selected_skills = []
-
-            if programming:
-                selected_skills.append("Programming")
-
-            if problem_solving:
-                selected_skills.append("Problem Solving")
-
-            if designing:
-                selected_skills.append("Designing")
-
-            if selected_skills:
-
-                st.success("Skills identified successfully!")
-
-                for skill in selected_skills:
-                    st.write("✅", skill)
-
-                selected_scores = []
-
-                if programming:
-                    selected_scores.append(80)
-
-                if problem_solving:
-                    selected_scores.append(80)
-
-                if designing:
-                    selected_scores.append(80)
-
-                overall_score = sum(selected_scores) // len(
-                    selected_scores
-                )
-
-                st.subheader("📊 Overall Skill Score")
-
-                st.metric(
-                    "Your Skill Score",
-                    f"{overall_score}%"
-                )
-
-            else:
-
-                st.warning(
-                    "Please select at least one skill."
-                )
-
-    # ==================================================
-    # 2. CAREER RECOMMENDATION
-    # ==================================================
-
-    elif feature == "Career Recommendation":
-
-        st.header("🎯 Smart Career Recommendation")
-
-        programming = st.checkbox(
-            "I enjoy programming",
-            key="career_programming"
-        )
-
-        problem_solving = st.checkbox(
-            "I enjoy solving problems",
-            key="career_problem_solving"
-        )
-
-        designing = st.checkbox(
-            "I enjoy designing",
-            key="career_designing"
-        )
-
-        if st.button("🚀 Recommend My Career"):
-
-            if programming and problem_solving:
-
-                career = "Software Developer"
-
-                reason = (
-                    "You enjoy programming and problem solving, "
-                    "which are important skills for software development."
-                )
-
-            elif designing:
-
-                career = "UI/UX Designer"
-
-                reason = (
-                    "Your interest in designing matches UI/UX design."
-                )
-
-            elif problem_solving:
-
-                career = "Data Analyst"
-
-                reason = (
-                    "Problem solving is an important part of data analysis."
-                )
-
-            elif programming:
-
-                career = "Software Developer"
-
-                reason = (
-                    "Programming is a core skill for software development."
-                )
-
-            else:
-
-                career = "Explore More Careers"
-
-                reason = (
-                    "Select more interests to get a better recommendation."
-                )
-
-            st.success(
-                f"Recommended Career: {career}"
-            )
-
-            st.info(
-                f"💡 Why this career?\n\n{reason}"
-            )
-
-    # ==================================================
-    # 3. DREAM JOB PREPARATION
-    # ==================================================
-
-    elif feature == "Dream Job Preparation":
-
-        st.header("💼 Dream Job Preparation")
-
-        dream_job = st.text_input(
-            "Enter your dream job",
-            placeholder="Example: Software Developer"
-        )
-
-        if st.button("📚 Create Preparation Plan"):
-
-            if dream_job:
-
-                st.success(
-                    "Your preparation plan is ready!"
-                )
-
-                st.write("### Step 1 — Learn Technical Skills")
-                st.write(
-                    "Learn the programming languages and technologies "
-                    "required for your dream job."
-                )
-
-                st.write("### Step 2 — Build Projects")
-                st.write(
-                    "Create practical projects to demonstrate your skills."
-                )
-
-                st.write("### Step 3 — Improve Communication")
-                st.write(
-                    "Practice explaining your projects and technical concepts."
-                )
-
-                st.write("### Step 4 — Prepare for Interviews")
-                st.write(
-                    "Practice aptitude, technical and HR interview questions."
-                )
-
-                st.write("### Step 5 — Apply for Jobs")
-                st.write(
-                    "Prepare your resume and apply for suitable job opportunities."
-                )
-
-            else:
-
-                st.warning(
-                    "Please enter your dream job."
-                )
-
-    # ==================================================
-    # 4. CAREER REPORT
-    # ==================================================
-
-    elif feature == "Career Report":
-
-        st.header("📄 Career Report")
-
-        dream_job = st.text_input(
-            "Enter your dream job",
-            key="report_job"
-        )
-
-        if st.button("📊 Generate Career Report"):
-
-            if dream_job:
-
-                st.success(
-                    "Your career report has been created successfully!"
-                )
-
-                st.write("### 👤 Candidate")
-                st.write(name)
-
-                st.write("### 🎯 Dream Job")
-                st.write(dream_job)
-
-                st.write("### 💼 Recommended Career")
-                st.write(dream_job)
-
-                st.write("### 📈 Skill Score")
-                st.write("80%")
-
-                st.write("### 🚀 Job Readiness")
-                st.write("92%")
-
-            else:
-
-                st.warning(
-                    "Please enter your dream job."
-                )
-
-    # ==================================================
-    # 5. RESUME ANALYZER
-    # ==================================================
-
-    elif feature == "Resume Analyzer":
-
-        st.header("📄 Resume Analyzer")
-
-        st.write(
-            "Upload your resume to identify technical skills."
-        )
-
-        uploaded_file = st.file_uploader(
-            "Upload your Resume",
-            type=["pdf", "docx"]
-        )
-
-        if uploaded_file:
-
-            st.success(
-                "Resume uploaded successfully!"
-            )
-
-            if st.button("🔍 Analyze Resume"):
-
-                resume_text = ""
-
-                try:
-
-                    if uploaded_file.name.lower().endswith(".pdf"):
-
-                        reader = PdfReader(uploaded_file)
-
-                        for page in reader.pages:
-
-                            text = page.extract_text()
-
-                            if text:
-                                resume_text += text
-
-                    else:
-
-                        document = Document(uploaded_file)
-
-                        for paragraph in document.paragraphs:
-
-                            resume_text += (
-                                paragraph.text + " "
-                            )
-
-                    resume_text = resume_text.lower()
-
-                    skills = [
-                        "python",
-                        "java",
-                        "c++",
-                        "sql",
-                        "html",
-                        "css",
-                        "javascript",
-                        "react",
-                        "machine learning",
-                        "data analysis",
-                        "git",
-                        "streamlit"
-                    ]
-
-                    found_skills = []
-
-                    for skill in skills:
-
-                        if skill in resume_text:
-                            found_skills.append(skill)
-
-                    missing_skills = [
-                        skill
-                        for skill in skills
-                        if skill not in found_skills
-                    ]
-
-                    score = min(
-                        int(
-                            (len(found_skills) / len(skills))
-                            * 100
-                        ),
-                        100
-                    )
-
-                    st.subheader("🧠 Skills Found")
-
-                    if found_skills:
-
-                        for skill in found_skills:
-                            st.write("✅", skill.title())
-
-                    else:
-
-                        st.write(
-                            "No technical skills detected."
-                        )
-
-                    st.subheader("📚 Skills You Can Add")
-
-                    for skill in missing_skills:
-                        st.write("➕", skill.title())
-
-                    st.subheader("📊 Resume Score")
-
-                    st.metric(
-                        "Resume Score",
-                        f"{score}%"
-                    )
-
-                    st.progress(score)
-
-                    if score >= 70:
-
-                        st.success(
-                            "Your resume contains a good number "
-                            "of technical skills."
-                        )
-
-                    elif score >= 40:
-
-                        st.info(
-                            "Your resume is good, but you can add "
-                            "more relevant technical skills."
-                        )
-
-                    else:
-
-                        st.warning(
-                            "Consider adding more technical skills "
-                            "and projects."
-                        )
-
-                    st.caption(
-                        "Note: This is a basic demo resume analysis "
-                        "based on detected technical skills."
-                    )
-
-                except Exception as e:
-
-                    st.error(
-                        f"Unable to analyze the resume: {e}"
-                    )
-
-    # ==================================================
-    # 6. INTERVIEW PREPARATION
-    # ==================================================
-
-    elif feature == "Interview Preparation":
-
-        st.header("🎤 Interview Question Generator")
-
-        target_job = st.selectbox(
-            "Select your target job",
-            [
-                "Software Developer",
-                "Data Analyst",
-                "UI/UX Designer"
-            ],
-            key="interview_target_job"
-        )
-
-        if st.button("🔍 Generate Interview Questions"):
-
-            st.subheader("💻 Technical Questions")
-
-            if target_job == "Software Developer":
-
-                questions = [
-                    (
-                        "What is OOP?",
-                        "OOP stands for Object-Oriented Programming. "
-                        "It is a programming approach based on objects and classes."
-                    ),
-                    (
-                        "What is a variable?",
-                        "A variable is a named memory location used to store data."
-                    ),
-                    (
-                        "What is a database?",
-                        "A database is an organized collection of data."
-                    ),
-                    (
-                        "What is SQL?",
-                        "SQL is used to store, retrieve and manage data in databases."
-                    ),
-                    (
-                        "What is Git?",
-                        "Git is a version control system used to track code changes."
-                    )
-                ]
-
-            elif target_job == "Data Analyst":
-
-                questions = [
-                    (
-                        "What is data analysis?",
-                        "Data analysis is the process of examining data to find useful information."
-                    ),
-                    (
-                        "What is SQL?",
-                        "SQL is used to query and manage data in databases."
-                    ),
-                    (
-                        "What is a dataset?",
-                        "A dataset is a collection of related data."
-                    ),
-                    (
-                        "What is data visualization?",
-                        "Data visualization represents data using charts and graphs."
-                    ),
-                    (
-                        "What is Python used for in data analysis?",
-                        "Python can be used for data processing, analysis and visualization."
-                    )
-                ]
-
-            else:
-
-                questions = [
-                    (
-                        "What is UI?",
-                        "UI means User Interface. It refers to the visual elements of an application."
-                    ),
-                    (
-                        "What is UX?",
-                        "UX means User Experience. It focuses on how users interact with a product."
-                    ),
-                    (
-                        "What is a wireframe?",
-                        "A wireframe is a basic visual structure of a webpage or application."
-                    ),
-                    (
-                        "Why is user research important?",
-                        "It helps designers understand user needs and problems."
-                    ),
-                    (
-                        "What is usability?",
-                        "Usability refers to how easily users can use a product."
-                    )
-                ]
-
-            for question, answer in questions:
-
-                with st.expander(question):
-
-                    st.write("**Answer:**")
-                    st.write(answer)
-
-            st.subheader("🤝 HR Questions")
-
-            hr_questions = [
-                (
-                    "Tell me about yourself.",
-                    "I am a CSE student interested in software development and technology. "
-                    "I enjoy solving problems and building practical projects."
-                ),
-                (
-                    "What are your strengths?",
-                    "My strengths are problem solving, learning new technologies and teamwork."
-                ),
-                (
-                    "Why should we hire you?",
-                    "I am willing to learn, improve my skills and contribute to the organization."
-                ),
-                (
-                    "Where do you see yourself in five years?",
-                    "I want to become a skilled professional and take more responsibility in my career."
-                )
-            ]
-
-            for question, answer in hr_questions:
-
-                with st.expander(question):
-
-                    st.write("**Answer:**")
-                    st.write(answer)
-
-    # ==================================================
-    # 7. JOB READINESS SCORE
-    # ==================================================
-
-    elif feature == "Job Readiness Score":
-
-        st.header("🚀 Job Readiness Score")
-
-        st.write(
-            "Check how prepared you are for your target job."
-        )
-
-        technical_score = st.slider(
-            "💻 Technical Skills",
-            0,
-            100,
-            70,
-            key="readiness_technical"
-        )
-
-        resume_ready = st.radio(
-            "📄 Is your resume ready?",
-            ["Yes", "Needs Improvement"],
-            key="readiness_resume"
-        )
-
-        interview_ready = st.radio(
-            "🎤 Are you prepared for interviews?",
-            ["Yes", "Not Yet"],
-            key="readiness_interview"
-        )
-
-        project_ready = st.radio(
-            "🛠️ Do you have project experience?",
-            ["Yes", "Not Yet"],
-            key="readiness_project"
-        )
-
-        if st.button("🚀 Calculate Job Readiness"):
-
-            resume_score = 100 if resume_ready == "Yes" else 50
-            interview_score = 100 if interview_ready == "Yes" else 40
-            project_score = 100 if project_ready == "Yes" else 40
-
-            job_readiness_score = int(
-                (
-                    technical_score
-                    + resume_score
-                    + interview_score
-                    + project_score
-                ) / 4
-            )
-
-            st.subheader("📊 Overall Job Readiness")
-
-            st.metric(
-                "Job Readiness Score",
-                f"{job_readiness_score}%"
-            )
-
-            st.progress(job_readiness_score)
-
-            st.write("### 📋 Readiness Breakdown")
-
-            st.write(f"💻 Technical Skills: {technical_score}%")
-            st.write(f"📄 Resume: {resume_score}%")
-            st.write(f"🎤 Interview Preparation: {interview_score}%")
-            st.write(f"🛠️ Project Experience: {project_score}%")
-
-            st.success(
-                "Career Twin AI has generated your personal "
-                "Job Readiness Report."
-            )
-
-    # ==================================================
-    # 8. JOB RECOMMENDATION
-    # ==================================================
-
-    elif feature == "Job Recommendation":
-
-        st.header("💼 Job Recommendation")
-
-        interest = st.selectbox(
-            "Select your area of interest",
-            [
-                "Software Development",
-                "Data Analytics",
-                "UI/UX Design",
-                "Web Development",
-                "Artificial Intelligence"
-            ],
-            key="job_interest"
-        )
-
-        if st.button("🔎 Find Suitable Jobs"):
-
-            if interest == "Software Development":
-
-                role = "Software Developer"
-
-                companies = ["TCS", "Infosys", "Wipro", "Accenture"]
-
-                required_skills = [
-                    "Python / Java",
-                    "SQL",
-                    "Data Structures",
-                    "Git"
-                ]
-
-                improve = [
-                    "Advanced DSA",
-                    "Problem Solving",
-                    "System Design"
-                ]
-
-            elif interest == "Data Analytics":
-
-                role = "Data Analyst"
-
-                companies = [
-                    "TCS",
-                    "Infosys",
-                    "Accenture",
-                    "Deloitte"
-                ]
-
-                required_skills = [
-                    "Python",
-                    "SQL",
-                    "Excel",
-                    "Data Visualization"
-                ]
-
-                improve = [
-                    "Statistics",
-                    "Power BI",
-                    "Advanced SQL"
-                ]
-
-            elif interest == "UI/UX Design":
-
-                role = "UI/UX Designer"
-
-                companies = [
-                    "Accenture",
-                    "TCS",
-                    "Infosys",
-                    "IBM"
-                ]
-
-                required_skills = [
-                    "Figma",
-                    "Wireframing",
-                    "Prototyping",
-                    "User Research"
-                ]
-
-                improve = [
-                    "Design Thinking",
-                    "UX Research",
-                    "Portfolio"
-                ]
-
-            elif interest == "Web Development":
-
-                role = "Web Developer"
-
-                companies = [
-                    "TCS",
-                    "Wipro",
-                    "Infosys",
-                    "HCLTech"
-                ]
-
-                required_skills = [
-                    "HTML",
-                    "CSS",
-                    "JavaScript",
-                    "React"
-                ]
-
-                improve = [
-                    "React",
-                    "APIs",
-                    "Web Security"
-                ]
-
-            else:
-
-                role = "AI / ML Engineer"
-
-                companies = [
-                    "TCS",
-                    "Infosys",
-                    "Accenture",
-                    "IBM"
-                ]
-
-                required_skills = [
-                    "Python",
-                    "Machine Learning",
-                    "Data Science",
-                    "SQL"
-                ]
-
-                improve = [
-                    "Deep Learning",
-                    "Machine Learning",
-                    "AI Projects"
-                ]
-
-            st.success(
-                f"Recommended Job Role: {role}"
-            )
-
-            st.subheader("🏢 Example Companies")
-
-            for company in companies:
-                st.write("•", company)
-
-            st.subheader("🧠 Required Skills")
-
-            for skill in required_skills:
-                st.write("✅", skill)
-
-            st.subheader("📚 Skills to Improve")
-
-            for skill in improve:
-                st.write("📌", skill)
-
-    # ==================================================
-    # 9. AI CAREER ROADMAP
-    # ==================================================
-
-    elif feature == "AI Career Roadmap":
-
-        st.header("🗺️ AI Career Roadmap")
-
-        roadmap_career = st.selectbox(
-            "Select your target career",
-            [
-                "Software Developer",
-                "Data Analyst",
-                "UI/UX Designer",
-                "Web Developer",
-                "AI / ML Engineer"
-            ],
-            key="roadmap_career"
-        )
-
-        if st.button("🚀 Generate My Career Roadmap"):
-
-            st.success(
-                f"AI Career Roadmap generated for {roadmap_career}!"
-            )
-
-            if roadmap_career == "Software Developer":
-
-                st.subheader("🟢 Level 1 — Beginner")
-                st.write("1️⃣ Learn Python or Java basics")
-                st.write("2️⃣ Understand variables, loops and functions")
-                st.write("3️⃣ Learn Object-Oriented Programming")
-                st.progress(25)
-
-                st.subheader("🟡 Level 2 — Intermediate")
-                st.write("4️⃣ Learn SQL and databases")
-                st.write("5️⃣ Learn Data Structures and Algorithms")
-                st.write("6️⃣ Learn Git and GitHub")
-                st.progress(50)
-
-                st.subheader("🟠 Level 3 — Advanced")
-                st.write("7️⃣ Build practical software projects")
-                st.write("8️⃣ Learn APIs and basic system design")
-                st.write("9️⃣ Improve problem-solving skills")
-                st.progress(75)
-
-                st.subheader("🔵 Level 4 — Job Ready")
-                st.write("🔟 Prepare your resume")
-                st.write("1️⃣1️⃣ Practice technical interviews")
-                st.write("1️⃣2️⃣ Practice HR interviews")
-                st.write("1️⃣3️⃣ Apply for suitable jobs")
-                st.progress(100)
-
-            elif roadmap_career == "Data Analyst":
-
-                st.subheader("🟢 Level 1 — Beginner")
-                st.write("1️⃣ Learn Excel")
-                st.write("2️⃣ Learn basic statistics")
-                st.write("3️⃣ Learn SQL")
-                st.progress(25)
-
-                st.subheader("🟡 Level 2 — Intermediate")
-                st.write("4️⃣ Learn Python")
-                st.write("5️⃣ Learn Pandas")
-                st.write("6️⃣ Learn data visualization")
-                st.progress(50)
-
-                st.subheader("🟠 Level 3 — Advanced")
-                st.write("7️⃣ Learn Power BI")
-                st.write("8️⃣ Work with real datasets")
-                st.write("9️⃣ Build data analysis projects")
-                st.progress(75)
-
-                st.subheader("🔵 Level 4 — Job Ready")
-                st.write("🔟 Prepare your resume")
-                st.write("1️⃣1️⃣ Build a portfolio")
-                st.write("1️⃣2️⃣ Practice interviews")
-                st.write("1️⃣3️⃣ Apply for jobs")
-                st.progress(100)
-
-            elif roadmap_career == "UI/UX Designer":
-
-                st.subheader("🟢 Level 1 — Beginner")
-                st.write("1️⃣ Learn UI/UX fundamentals")
-                st.write("2️⃣ Learn design principles")
-                st.write("3️⃣ Learn user research")
-                st.progress(25)
-
-                st.subheader("🟡 Level 2 — Intermediate")
-                st.write("4️⃣ Learn Figma")
-                st.write("5️⃣ Create wireframes")
-                st.write("6️⃣ Create prototypes")
-                st.progress(50)
-
-                st.subheader("🟠 Level 3 — Advanced")
-                st.write("7️⃣ Work on real design projects")
-                st.write("8️⃣ Improve usability knowledge")
-                st.write("9️⃣ Build a design portfolio")
-                st.progress(75)
-
-                st.subheader("🔵 Level 4 — Job Ready")
-                st.write("🔟 Prepare your resume")
-                st.write("1️⃣1️⃣ Prepare your portfolio")
-                st.write("1️⃣2️⃣ Practice interviews")
-                st.write("1️⃣3️⃣ Apply for jobs")
-                st.progress(100)
-
-            elif roadmap_career == "Web Developer":
-
-                st.subheader("🟢 Level 1 — Beginner")
-                st.write("1️⃣ Learn HTML")
-                st.write("2️⃣ Learn CSS")
-                st.write("3️⃣ Learn JavaScript")
-                st.progress(25)
-
-                st.subheader("🟡 Level 2 — Intermediate")
-                st.write("4️⃣ Learn responsive web design")
-                st.write("5️⃣ Learn Git and GitHub")
-                st.write("6️⃣ Learn APIs")
-                st.progress(50)
-
-                st.subheader("🟠 Level 3 — Advanced")
-                st.write("7️⃣ Learn React")
-                st.write("8️⃣ Build full web projects")
-                st.write("9️⃣ Learn basic web security")
-                st.progress(75)
-
-                st.subheader("🔵 Level 4 — Job Ready")
-                st.write("🔟 Prepare your resume")
-                st.write("1️⃣1️⃣ Create a project portfolio")
-                st.write("1️⃣2️⃣ Practice interviews")
-                st.write("1️⃣3️⃣ Apply for jobs")
-                st.progress(100)
-
-            else:
-
-                st.subheader("🟢 Level 1 — Beginner")
-                st.write("1️⃣ Learn Python")
-                st.write("2️⃣ Learn mathematics and statistics")
-                st.write("3️⃣ Learn SQL")
-                st.progress(25)
-
-                st.subheader("🟡 Level 2 — Intermediate")
-                st.write("4️⃣ Learn NumPy and Pandas")
-                st.write("5️⃣ Learn Machine Learning basics")
-                st.write("6️⃣ Practice with datasets")
-                st.progress(50)
-
-                st.subheader("🟠 Level 3 — Advanced")
-                st.write("7️⃣ Learn Deep Learning basics")
-                st.write("8️⃣ Build AI/ML projects")
-                st.write("9️⃣ Learn model evaluation")
-                st.progress(75)
-
-                st.subheader("🔵 Level 4 — Job Ready")
-                st.write("🔟 Prepare your resume")
-                st.write("1️⃣1️⃣ Build an AI project portfolio")
-                st.write("1️⃣2️⃣ Practice technical interviews")
-                st.write("1️⃣3️⃣ Apply for suitable jobs")
-                st.progress(100)
-
-    # ==================================================
-    # 10. AI CAREER PROGRESS TRACKER
-    # ==================================================
-
-    elif feature == "AI Career Progress Tracker":
-
-        st.header("📊 AI Career Progress Tracker")
-
-        tracker_career = st.selectbox(
-            "Target Career",
-            [
-                "Software Developer",
-                "Data Analyst",
-                "UI/UX Designer",
-                "Web Developer",
-                "AI / ML Engineer"
-            ],
-            key="tracker_career"
-        )
-
-        st.info(
-            f"Tracking progress for: {tracker_career}"
-        )
-
-        technical_progress = st.slider(
-            "💻 Technical Skills Progress",
-            0,
-            100,
-            70,
-            key="technical_progress"
-        )
-
-        resume_progress = st.slider(
-            "📄 Resume Preparation",
-            0,
-            100,
-            80,
-            key="resume_progress"
-        )
-
-        interview_progress = st.slider(
-            "🎤 Interview Preparation",
-            0,
-            100,
-            60,
-            key="interview_progress"
-        )
-
-        project_progress = st.slider(
-            "🛠️ Project Experience",
-            0,
-            100,
-            70,
-            key="project_progress"
-        )
-
-        if st.button("📈 Calculate My Overall Progress"):
-
-            overall_progress = int(
-                (
-                    technical_progress
-                    + resume_progress
-                    + interview_progress
-                    + project_progress
-                ) / 4
-            )
-
-            st.subheader("🌟 Overall Career Progress")
-
-            st.metric(
-                "Overall Progress",
-                f"{overall_progress}%"
-            )
-
-            st.progress(overall_progress)
-
-            progress_values = {
-                "Technical Skills": technical_progress,
-                "Resume Preparation": resume_progress,
-                "Interview Preparation": interview_progress,
-                "Project Experience": project_progress
-            }
-
-            weakest_area = min(
-                progress_values,
-                key=progress_values.get
-            )
-
-            weakest_score = progress_values[weakest_area]
-
-            st.subheader("📋 Progress Breakdown")
-
-            for area, score in progress_values.items():
-
-                st.write(
-                    f"📌 {area}: {score}%"
-                )
-
-                st.progress(score)
-
-            st.subheader("🚀 Suggested Next Steps")
-
-            st.info(
-                f"💡 Your current focus area is "
-                f"{weakest_area} ({weakest_score}%)."
-            )
-
-    # ==================================================
-    # 11. PERSONALIZED SKILL GAP ANALYZER
-    # ==================================================
-
-    elif feature == "Personalized Skill Gap Analyzer":
-
-        st.header("📋 Personalized Skill Gap Analyzer")
-
-        gap_career = st.selectbox(
-            "🎯 Select your target career",
-            [
-                "Software Developer",
-                "Data Analyst",
-                "UI/UX Designer",
-                "Web Developer",
-                "AI / ML Engineer"
-            ],
-            key="gap_career"
-        )
-
-        st.subheader("🧠 Select Your Current Skills")
-
-        if gap_career == "Software Developer":
-
-            skill1 = st.checkbox("Python", key="gap_python")
-            skill2 = st.checkbox("Java", key="gap_java")
-            skill3 = st.checkbox("SQL", key="gap_sql")
-            skill4 = st.checkbox("Data Structures", key="gap_dsa")
-            skill5 = st.checkbox("Git", key="gap_git")
-
-            current_skills = []
-
-            if skill1:
-                current_skills.append("Python")
-            if skill2:
-                current_skills.append("Java")
-            if skill3:
-                current_skills.append("SQL")
-            if skill4:
-                current_skills.append("Data Structures")
-            if skill5:
-                current_skills.append("Git")
-
-            required_skills = [
-                "Python",
-                "Java",
-                "SQL",
-                "Data Structures",
-                "Git"
-            ]
-
-        elif gap_career == "Data Analyst":
-
-            skill1 = st.checkbox("Python", key="gap_da_python")
-            skill2 = st.checkbox("SQL", key="gap_da_sql")
-            skill3 = st.checkbox("Excel", key="gap_excel")
-            skill4 = st.checkbox("Statistics", key="gap_statistics")
-            skill5 = st.checkbox("Power BI", key="gap_powerbi")
-
-            current_skills = []
-
-            if skill1:
-                current_skills.append("Python")
-            if skill2:
-                current_skills.append("SQL")
-            if skill3:
-                current_skills.append("Excel")
-            if skill4:
-                current_skills.append("Statistics")
-            if skill5:
-                current_skills.append("Power BI")
-
-            required_skills = [
-                "Python",
-                "SQL",
-                "Excel",
-                "Statistics",
-                "Power BI"
-            ]
-
-        elif gap_career == "UI/UX Designer":
-
-            skill1 = st.checkbox("Figma", key="gap_figma")
-            skill2 = st.checkbox("Wireframing", key="gap_wireframe")
-            skill3 = st.checkbox("Prototyping", key="gap_prototype")
-            skill4 = st.checkbox("User Research", key="gap_research")
-            skill5 = st.checkbox("Design Thinking", key="gap_design")
-
-            current_skills = []
-
-            if skill1:
-                current_skills.append("Figma")
-            if skill2:
-                current_skills.append("Wireframing")
-            if skill3:
-                current_skills.append("Prototyping")
-            if skill4:
-                current_skills.append("User Research")
-            if skill5:
-                current_skills.append("Design Thinking")
-
-            required_skills = [
-                "Figma",
-                "Wireframing",
-                "Prototyping",
-                "User Research",
-                "Design Thinking"
-            ]
-
-        elif gap_career == "Web Developer":
-
-            skill1 = st.checkbox("HTML", key="gap_html")
-            skill2 = st.checkbox("CSS", key="gap_css")
-            skill3 = st.checkbox("JavaScript", key="gap_javascript")
-            skill4 = st.checkbox("React", key="gap_react")
-            skill5 = st.checkbox("Git", key="gap_web_git")
-
-            current_skills = []
-
-            if skill1:
-                current_skills.append("HTML")
-            if skill2:
-                current_skills.append("CSS")
-            if skill3:
-                current_skills.append("JavaScript")
-            if skill4:
-                current_skills.append("React")
-            if skill5:
-                current_skills.append("Git")
-
-            required_skills = [
-                "HTML",
-                "CSS",
-                "JavaScript",
-                "React",
-                "Git"
-            ]
-
-        else:
-
-            skill1 = st.checkbox("Python", key="gap_ai_python")
-            skill2 = st.checkbox("Machine Learning", key="gap_ml")
-            skill3 = st.checkbox("SQL", key="gap_ai_sql")
-            skill4 = st.checkbox("Statistics", key="gap_ai_statistics")
-            skill5 = st.checkbox("Deep Learning", key="gap_dl")
-
-            current_skills = []
-
-            if skill1:
-                current_skills.append("Python")
-            if skill2:
-                current_skills.append("Machine Learning")
-            if skill3:
-                current_skills.append("SQL")
-            if skill4:
-                current_skills.append("Statistics")
-            if skill5:
-                current_skills.append("Deep Learning")
-
-            required_skills = [
-                "Python",
-                "Machine Learning",
-                "SQL",
-                "Statistics",
-                "Deep Learning"
-            ]
-
-        if st.button("🔍 Analyze My Skill Gap"):
-
-            missing_skills = [
-                skill
-                for skill in required_skills
-                if skill not in current_skills
-            ]
-
-            skill_match = int(
-                (len(current_skills) / len(required_skills)) * 100
-            )
-
-            st.subheader("📊 Skill Match")
-
-            st.metric(
-                "Current Skill Match",
-                f"{skill_match}%"
-            )
-
-            st.progress(skill_match)
-
-            st.subheader("📚 Skill Gap — Skills to Learn")
-
-            if missing_skills:
-
-                for skill in missing_skills:
-                    st.write("🔴", skill)
-
-            else:
-
-                st.success(
-                    "🎉 You have selected all the required skills!"
-                )
-
-            st.subheader("🛣️ Personalized Learning Path")
-
-            for number, skill in enumerate(
-                missing_skills,
-                start=1
-            ):
-
-                st.write(
-                    f"**Step {number}:** Learn {skill}"
-                )
-
-                st.write(
-                    f"Practice {skill} with a small project."
-                )
-
-            st.subheader("💡 AI Recommendation")
-
-            if skill_match >= 80:
-
-                st.success(
-                    "You have a strong skill match. "
-                    "Focus on projects and interview preparation."
-                )
-
-            elif skill_match >= 60:
-
-                st.info(
-                    "You have a good foundation. "
-                    "Learn the missing skills and build projects."
-                )
-
-            else:
-
-                st.warning(
-                    "Focus on the missing skills one by one."
-                )
-
-    # ==================================================
-    # 12. AI INTERVIEW EVALUATION
-    # ==================================================
-
-    elif feature == "AI Interview Evaluation":
-
-        st.header("🤖 AI Interview Evaluation")
-
-        interview_role = st.selectbox(
-            "🎯 Select your interview role",
-            [
-                "Software Developer",
-                "Data Analyst",
-                "Web Developer"
-            ],
-            key="evaluation_role"
-        )
-
-        if interview_role == "Software Developer":
-
-            question = (
-                "Tell me about yourself and your technical skills."
-            )
-
-        elif interview_role == "Data Analyst":
-
-            question = (
-                "Tell me about yourself and your interest "
-                "in data analysis."
-            )
-
-        else:
-
-            question = (
-                "Tell me about yourself and your web "
-                "development skills."
-            )
-
-        st.subheader("🎤 Interview Question")
-        st.info(question)
-
-        answer = st.text_area(
-            "✍️ Type your answer",
-            placeholder=(
-                "Example: I am a CSE student interested "
-                "in software development. I enjoy solving "
-                "problems and building practical projects."
-            ),
-            height=180,
-            key="evaluation_answer"
-        )
-
-        if st.button("🤖 Evaluate My Answer"):
-
-            if answer.strip():
-
-                words = answer.strip().split()
-                answer_length = len(words)
-
-                score = 40
-
-                if answer_length >= 15:
-                    score += 15
-
-                if answer_length >= 30:
-                    score += 10
-
-                if answer_length >= 50:
-                    score += 10
-
-                answer_lower = answer.lower()
-
-                technical_keywords = [
-                    "python",
-                    "java",
-                    "sql",
-                    "programming",
-                    "coding",
-                    "project",
-                    "database",
-                    "software",
-                    "developer",
-                    "problem solving",
-                    "data",
-                    "web",
-                    "javascript",
-                    "react"
-                ]
-
-                keyword_count = 0
-
-                for keyword in technical_keywords:
-
-                    if keyword in answer_lower:
-                        keyword_count += 1
-
-                if keyword_count >= 1:
-                    score += 5
-
-                if keyword_count >= 2:
-                    score += 5
-
-                score = min(score, 100)
-
-                st.subheader(
-                    "📊 Interview Evaluation Result"
-                )
-
-                st.metric(
-                    "Answer Score",
-                    f"{score}%"
-                )
-
-                st.progress(score)
-
-                st.subheader("✅ What You Did Well")
-
-                st.write(
-                    "✅ Your answer was analyzed for "
-                    "detail and technical relevance."
-                )
-
-                st.subheader("⚠️ Areas to Improve")
-
-                if answer_length < 30:
-
-                    st.write(
-                        "🔸 Add more details about your "
-                        "skills, projects and experience."
-                    )
-
-                if keyword_count == 0:
-
-                    st.write(
-                        "🔸 Mention one or two relevant "
-                        "technical skills."
-                    )
-
-                st.write(
-                    "🔸 Try to answer in a clear and structured way."
-                )
-
-                st.subheader("💡 Suggested Better Answer")
-
-                if interview_role == "Software Developer":
-
-                    better_answer = (
-                        "I am a CSE student interested in "
-                        "software development. I enjoy "
-                        "programming and solving problems. "
-                        "I have been learning technical skills "
-                        "such as Python, SQL and programming "
-                        "fundamentals. I am also interested in "
-                        "building practical projects and "
-                        "improving my problem-solving skills."
-                    )
-
-                elif interview_role == "Data Analyst":
-
-                    better_answer = (
-                        "I am a CSE student interested in "
-                        "data analysis. I enjoy working with "
-                        "data and solving problems. I am "
-                        "learning skills such as Python, SQL "
-                        "and data analysis concepts."
-                    )
-
-                else:
-
-                    better_answer = (
-                        "I am a CSE student interested in "
-                        "web development. I enjoy creating "
-                        "web applications and solving "
-                        "programming problems. I am learning "
-                        "HTML, CSS and JavaScript."
-                    )
-
-                st.success(better_answer)
-
-            else:
-
-                st.warning(
-                    "Please type your answer before evaluating."
-                )
-
-    # ==================================================
-    # 13. CAREER ANALYTICS DASHBOARD
-    # ==================================================
-
-    elif feature == "Career Analytics Dashboard":
-
-        st.header("📊 Career Analytics Dashboard")
-
-        technical_score = 70
-        resume_score = 100
-        interview_score = 100
-        project_score = 100
-
-        overall_score = int(
-            (
-                technical_score
-                + resume_score
-                + interview_score
-                + project_score
-            ) / 4
-        )
-
-        st.subheader("🌟 Overall Career Progress")
-
-        st.metric(
-            "Overall Progress",
-            f"{overall_score}%"
-        )
-
-        st.progress(overall_score)
-
-        st.subheader("📈 Career Preparation Analytics")
-
-        col1, col2, col3, col4 = st.columns(4)
-
-        with col1:
-            st.metric(
-                "💻 Technical Skills",
-                f"{technical_score}%"
-            )
-
-        with col2:
-            st.metric(
-                "📄 Resume",
-                f"{resume_score}%"
-            )
-
-        with col3:
-            st.metric(
-                "🎤 Interview",
-                f"{interview_score}%"
-            )
-
-        with col4:
-            st.metric(
-                "🛠️ Projects",
-                f"{project_score}%"
-            )
-
-        st.subheader("📊 Progress Breakdown")
-
-        scores = {
-            "Technical Skills": technical_score,
-            "Resume Preparation": resume_score,
-            "Interview Preparation": interview_score,
-            "Project Experience": project_score
+        selected = st.multiselect("Select the skills you already have", CAREER_SKILLS[career_goal])
+        score = round(len(selected) / len(CAREER_SKILLS[career_goal]) * 100)
+        st.metric("Skills match", f"{score}%")
+        st.progress(score / 100)
+        st.write("Skills to explore:", ", ".join(s for s in CAREER_SKILLS[career_goal] if s not in selected) or "You selected all listed skills.")
+
+    elif feature == features[1]:
+        st.header("💡 Career Recommendation")
+        related = {
+            "Software Developer": ["Backend Developer", "Application Developer", "Python Developer"],
+            "Data Analyst": ["Business Analyst", "BI Analyst", "Data Associate"],
+            "UI/UX Designer": ["UI Designer", "UX Researcher", "Product Designer"],
+            "Web Developer": ["Frontend Developer", "Backend Developer", "Full Stack Developer"],
+            "AI / ML Engineer": ["Machine Learning Engineer", "AI Associate", "Data Scientist"],
+            "Software Tester": ["Manual Tester", "QA Analyst", "Automation Tester"],
+            "Doctor": ["General Physician", "Paediatrician", "Medical Specialist"],
+            "Teacher": ["School Teacher", "Online Tutor", "Subject Educator"],
+            "Nurse": ["Staff Nurse", "Community Health Nurse", "Specialty Nurse"]
         }
+        st.write(f"Related paths for **{career_goal}**:")
+        for role in related[career_goal]:
+            st.write("•", role)
 
-        for area, score in scores.items():
+    elif feature == features[2]:
+        st.header("🌟 Dream Job Preparation")
+        st.write(f"Preparation plan for **{career_goal}**:")
+        for step in ["Understand the required qualifications and skills", "Learn the fundamentals through a structured course", "Practise and complete projects or supervised training", "Prepare your resume and practise explaining your skills", "Apply for suitable entry-level opportunities"]:
+            st.write("•", step)
+        st.info("For regulated professions such as Doctor and Nurse, follow approved qualification, registration and licensing requirements.")
 
-            st.write(
-                f"📌 {area}: {score}%"
-            )
+    elif feature == features[3]:
+        st.header("📄 Career Report")
+        st.write("Name:", name)
+        st.write("Career goal:", career_goal)
+        st.write("Important skills:")
+        for skill in CAREER_SKILLS[career_goal]:
+            st.write("•", skill)
 
-            st.progress(score)
+    elif feature == features[4]:
+        st.header("📑 Resume Analyzer")
+        resume = st.file_uploader("Upload your resume (PDF or DOCX)", type=["pdf", "docx"])
+        if resume:
+            resume_text = extract_resume_text(resume)
+            st.text_area("Extracted resume text", resume_text, height=180)
+            found = [s for s in CAREER_SKILLS[career_goal] if s.lower() in resume_text.lower()]
+            missing = [s for s in CAREER_SKILLS[career_goal] if s not in found]
+            st.write(f"Relevant skills found: {len(found)} / {len(CAREER_SKILLS[career_goal])}")
+            st.write("Found:", ", ".join(found) if found else "No matching skills found.")
+            st.write("Consider adding only skills you genuinely have:", ", ".join(missing) if missing else "No listed skill gaps.")
 
-        st.subheader("💪 Strong Areas")
+    elif feature == features[5]:
+        st.header("🎤 Interview Preparation")
+        selected_career = st.selectbox("Choose interview area", CAREER_OPTIONS, index=CAREER_OPTIONS.index(career_goal), key="interview")
+        for question, answer in INTERVIEW_QA[selected_career]:
+            with st.expander(question):
+                st.write(answer)
 
-        for area, score in scores.items():
+    elif feature == features[6]:
+        st.header("📈 Job Readiness Score")
+        selected = st.multiselect("Skills you know", CAREER_SKILLS[career_goal], key="readiness")
+        resume_ready = st.checkbox("I have an updated resume")
+        project_ready = st.checkbox("I have completed a relevant project or practical training")
+        interview_ready = st.checkbox("I have practised interview questions")
+        total = round(len(selected) / len(CAREER_SKILLS[career_goal]) * 70) + (10 if resume_ready else 0) + (10 if project_ready else 0) + (10 if interview_ready else 0)
+        st.metric("Your readiness score", f"{total}/100")
+        st.progress(total / 100)
+        st.caption("This is a self-assessment guide, not a hiring result.")
 
-            if score >= 80:
+    elif feature == features[7]:
+        st.header("💼 Job Recommendation")
+        interest = st.selectbox("Select your interest", ["Software Development", "Data Analytics", "UI/UX Design", "Web Development", "Artificial Intelligence", "Software Testing", "Healthcare", "Education"])
+        jobs = {
+            "Software Development": ["Junior Software Developer", "Python Developer"],
+            "Data Analytics": ["Junior Data Analyst", "BI Trainee"],
+            "UI/UX Design": ["UI/UX Design Intern", "Junior UI Designer"],
+            "Web Development": ["Frontend Developer Trainee", "Web Developer"],
+            "Artificial Intelligence": ["AI/ML Intern", "Junior Data Associate"],
+            "Software Testing": ["Manual Testing Trainee", "QA Analyst Trainee"],
+            "Healthcare": ["Explore approved Doctor or Nurse qualification pathways"],
+            "Education": ["Teaching Assistant", "Tutor", "Teacher (with required qualifications)"]
+        }
+        st.write("Suggested roles:")
+        for job in jobs[interest]:
+            st.write("•", job)
+        st.caption("Check employer eligibility and official qualification requirements.")
 
-                st.write(
-                    f"✅ {area}: {score}%"
-                )
+    elif feature == features[8]:
+        st.header("🗺️ AI Career Roadmap")
+        selected_career = st.selectbox("Choose a career", CAREER_OPTIONS, index=CAREER_OPTIONS.index(career_goal), key="roadmap")
+        for i, step in enumerate(ROADMAPS[selected_career], 1):
+            st.write(f"**Step {i}:** {step}")
 
-        st.subheader("🎯 Area to Improve")
+    elif feature == features[9]:
+        st.header("📍 AI Career Progress Tracker")
+        selected_career = st.selectbox("Career to track", CAREER_OPTIONS, index=CAREER_OPTIONS.index(career_goal), key="tracker")
+        progress = st.slider("How much of your learning plan have you completed?", 0, 100, 0)
+        st.progress(progress / 100)
+        st.metric(f"{selected_career} progress", f"{progress}%")
 
-        weakest_area = min(
-            scores,
-            key=scores.get
-        )
+    elif feature == features[10]:
+        st.header("🔍 Personalized Skill Gap Analyzer")
+        selected_career = st.selectbox("Choose a career", CAREER_OPTIONS, index=CAREER_OPTIONS.index(career_goal), key="gapcareer")
+        known = st.multiselect("Select skills you already know", CAREER_SKILLS[selected_career], key="gapskills")
+        gaps = [s for s in CAREER_SKILLS[selected_career] if s not in known]
+        st.write("Your strengths:", ", ".join(known) if known else "Select the skills you know.")
+        st.write("Skills to develop:", ", ".join(gaps) if gaps else "You selected all listed skills.")
 
-        weakest_score = scores[weakest_area]
+    elif feature == features[11]:
+        st.header("📝 AI Interview Evaluation")
+        selected_career = st.selectbox("Choose interview area", CAREER_OPTIONS, index=CAREER_OPTIONS.index(career_goal), key="evaluation")
+        question, sample = INTERVIEW_QA[selected_career][0]
+        st.write("**Question:**", question)
+        answer = st.text_area("Type your answer")
+        if st.button("Evaluate my answer"):
+            if len(answer.strip()) < 20:
+                st.warning("Please write a little more so you can review your answer.")
+            else:
+                st.success("Answer submitted for self-review.")
+                st.write("Compare your answer with these key points:")
+                st.info(sample)
+                st.caption("This is a basic practice aid, not a professional interview score.")
 
-        st.warning(
-            f"{weakest_area} needs more attention "
-            f"({weakest_score}%)."
-        )
+    elif feature == features[12]:
+        st.header("📊 Career Analytics Dashboard")
+        st.write("Your selected career:", career_goal)
+        st.metric("Skills listed", len(CAREER_SKILLS[career_goal]))
+        st.metric("Roadmap steps", len(ROADMAPS[career_goal]))
+        st.write("Use Skills Discovery, Skill Gap Analyzer and Progress Tracker to monitor your preparation.")
 
-        st.subheader("🤖 AI Recommendation")
+    elif feature == features[13]:
+        st.header("⬇️ Download Career Report")
+        report = f"""CAREERTWIN AI - CAREER REPORT
+Name: {name}
+Career Goal: {career_goal}
 
-        st.info(
-            "Focus on improving your technical skills "
-            "through coding practice, SQL, DSA and projects."
-        )
+Suggested Skills:
+{chr(10).join('- ' + skill for skill in CAREER_SKILLS[career_goal])}
 
-        st.success(
-            "Career Twin AI has generated your "
-            "Career Analytics Dashboard successfully!"
-        )
+Career Roadmap:
+{chr(10).join(str(i + 1) + '. ' + step for i, step in enumerate(ROADMAPS[career_goal]))}
 
-    # ==================================================
-    # 14. DOWNLOAD CAREER REPORT
-    # ==================================================
-
-    elif feature == "Download Career Report":
-
-        st.header("📥 Download Career Report")
-
-        st.write(
-            "Generate a simple career report containing "
-            "your career preparation details."
-        )
-
-        # --------------------------------------------------
-        # REPORT DATA
-        # --------------------------------------------------
-
-        technical_score = 70
-        resume_score = 100
-        interview_score = 100
-        project_score = 100
-
-        overall_score = int(
-            (
-                technical_score
-                + resume_score
-                + interview_score
-                + project_score
-            ) / 4
-        )
-
-        report = f"""
-==================================================
-             CAREER TWIN AI
-              CAREER REPORT
-==================================================
-
-Candidate Name:
-{name}
-
-Career Goal:
-{career_goal}
-
---------------------------------------------------
-CAREER PREPARATION SUMMARY
---------------------------------------------------
-
-Technical Skills       : {technical_score}%
-Resume Preparation     : {resume_score}%
-Interview Preparation  : {interview_score}%
-Project Experience     : {project_score}%
-
-Overall Career Progress: {overall_score}%
-
-Job Readiness Score    : 92%
-Skill Score            : 80%
-
---------------------------------------------------
-CAREER FEATURES
---------------------------------------------------
-
-1. Skills Discovery
-2. Career Recommendation
-3. Dream Job Preparation
-4. Career Report
-5. Resume Analyzer
-6. Interview Preparation
-7. Job Readiness Score
-8. Job Recommendation
-9. AI Career Roadmap
-10. AI Career Progress Tracker
-11. Personalized Skill Gap Analyzer
-12. AI Interview Evaluation
-13. Career Analytics Dashboard
-
---------------------------------------------------
-AI RECOMMENDATION
---------------------------------------------------
-
-Focus on improving your technical skills through
-programming practice, SQL, Data Structures,
-problem-solving and practical projects.
-
-Continue practicing technical and HR interview
-questions and keep improving your resume.
-
---------------------------------------------------
-END OF REPORT
---------------------------------------------------
-
-Generated by Career Twin AI
+Note: This report is for learning guidance. Follow official qualification and licensing rules for regulated professions.
 """
-
-        st.subheader("📄 Report Preview")
-
-        st.text_area(
-            "Career Report",
-            report,
-            height=500
-        )
-
-        st.download_button(
-            label="📥 Download Career Report",
-            data=report,
-            file_name="Career_Twin_AI_Report.txt",
-            mime="text/plain"
-        )
-
-        st.success(
-            "Your Career Report is ready to download! 🚀"
-        )
+        st.download_button("Download Career Report", data=report, file_name="CareerTwin_AI_Report.txt", mime="text/plain")
