@@ -72,6 +72,7 @@ def extract_resume_text(uploaded_file):
         return f"Could not read the file: {error}"
 
 st.title("🎯 CareerTwin AI")
+st.caption("Developed by Avantika S | Final Year B.E. Computer Science Engineering")
 st.subheader("Your AI-powered career planning companion")
 st.write("Explore careers, discover skills, prepare for interviews and create your learning roadmap.")
 
