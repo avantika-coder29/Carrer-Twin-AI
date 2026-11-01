@@ -294,21 +294,14 @@ name = st.text_input(
 
 # IMPORTANT: FREE TEXT CAREER INPUT
 
-career_goal = st.text_input(
-    "Enter any career you are interested in",
-    placeholder="Example: Teacher, Doctor, Nurse, Lawyer, Software Tester"
+career_goal = st.selectbox(
+    "Select Your Career Goal",
+    list(CAREERS.keys()),
+    format_func=lambda x: x.title()
 )
 
-if not career_goal.strip():
-    st.info("Please enter a career name to explore your career guidance.")
-    st.stop()
-
-career_key = " ".join(career_goal.strip().lower().split())
-
-if career_key in CAREERS:
-    profile = CAREERS[career_key]
-else:
-    profile = create_profile(career_goal)
+career_key = career_goal
+profile = CAREERS[career_key]
 
 st.success("Career selected: " + career_goal.title())
 
@@ -326,7 +319,16 @@ FEATURES = [
     "AI Career Roadmap",
     "AI Career Progress Tracker",
     "Personalized Skill Gap Analyzer",
-    "AI Interview Evaluation",
+    "AI Interview Evaluation",career_goal = st.selectbox(
+    "Select Your Career Goal",
+    list(CAREERS.keys()),
+    format_func=lambda x: x.title()
+)
+
+career_key = career_goal
+profile = CAREERS[career_key]
+
+st.success("Career selected: " + career_goal.title())
     "Career Analytics Dashboard",
     "Download Career Report"
 ]
